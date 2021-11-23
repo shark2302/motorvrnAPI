@@ -5,6 +5,11 @@ import json
 import hashlib
 import base64
 
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager
+
 from dtos.postDTO import PostDTO, PostEncoder
 from dtos.userDTO import UserDTO
 from dtos.loginResultDTO import LoginResultDTO
@@ -12,7 +17,8 @@ from dtos.loginResultDTO import LoginResultDTO
 app = Flask(__name__)
 
 app.config.from_object(Config)
-
+app.config["JWT_SECRET_KEY"] = "super-secret"
+jwt = JWTManager(app)
 
 mysql = MySQL()
 app.config['JSON_AS_ASCII'] = False
@@ -35,13 +41,14 @@ def login() :
         and password =\"{passwordCode}\";""")
    columnNames = [column[0] for column in cursor.description]
    record = dict(zip(columnNames, cursor.fetchall()[0]))
-
-   result = LoginResultDTO(record['id'], record['username'], record['password'], generate_token(login, passwordCode))
+   access_token = create_access_token(identity={'login':login, 'password':password})
+   result = LoginResultDTO(record['id'], record['username'], record['password'], access_token)
    return json.dumps(result, ensure_ascii=False, indent=4, cls=PostEncoder)
 
 
 
 @app.route("/get_all_posts/", methods =['GET'])
+@jwt_required()
 def get_all_posts() :
     cursor.execute("""SELECT * FROM motovrn.mv2_posts, motovrn.mv2_topics, motovrn.mv2_forums
 where topic_id = mv2_topics.id and mv2_topics.forum_id = 1 LIMIT 20;""")
@@ -49,7 +56,8 @@ where topic_id = mv2_topics.id and mv2_topics.forum_id = 1 LIMIT 20;""")
     result = []
     for record in cursor.fetchall() :
         result.append(dict(zip(columnNames, record)))
-
+    user=get_jwt_identity()
+    print(user)
     return serialize_posts(result)
 
 
