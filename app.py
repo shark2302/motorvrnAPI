@@ -1,10 +1,13 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flaskext.mysql import MySQL
 from config import Config
 import json
+import hashlib
+import base64
 
 from dtos.postDTO import PostDTO, PostEncoder
 from dtos.userDTO import UserDTO
+from dtos.loginResultDTO import LoginResultDTO
 
 app = Flask(__name__)
 
@@ -20,6 +23,23 @@ app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
 conn = mysql.connect()
 cursor = conn.cursor()
+
+@app.route("/login", methods = ['POST'])
+def login() :
+   login = request.args.get('login');
+   password = request.args.get('password')
+   passwordCode = hashlib.sha1(password.encode())
+   passwordCode = passwordCode.hexdigest()
+   print(passwordCode)
+   cursor.execute(f"""SELECT * FROM motovrn.mv2_users where username = \"{login}\" 
+        and password =\"{passwordCode}\";""")
+   columnNames = [column[0] for column in cursor.description]
+   record = dict(zip(columnNames, cursor.fetchall()[0]))
+
+   result = LoginResultDTO(record['id'], record['username'], record['password'], generate_token(login, passwordCode))
+   return json.dumps(result, ensure_ascii=False, indent=4, cls=PostEncoder)
+
+
 
 @app.route("/get_all_posts/", methods =['GET'])
 def get_all_posts() :
@@ -38,3 +58,10 @@ def serialize_posts(records):
     for record in records:
         result.append(PostDTO(record['id'], UserDTO(record['poster_id'], record['poster']), record['message']))
     return json.dumps(result, ensure_ascii=False, indent=4, cls=PostEncoder)
+
+def generate_token(login, password) :
+    tokenString = login + password
+    message_bytes = tokenString.encode('ascii')
+    base64_bytes = base64.b64encode(message_bytes)
+    base64_message = base64_bytes.decode('ascii')
+    return base64_message
