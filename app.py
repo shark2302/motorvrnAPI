@@ -26,6 +26,7 @@ app.config['MYSQL_DATABASE_USER'] = 'root'
 app.config['MYSQL_DATABASE_DB'] = input()
 app.config['MYSQL_DATABASE_PASSWORD'] = input()
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+app.config['USE_SHA1'] = True
 mysql.init_app(app)
 conn = mysql.connect()
 cursor = conn.cursor()
@@ -34,7 +35,7 @@ cursor = conn.cursor()
 def login() :
    login = request.args.get('login');
    password = request.args.get('password')
-   passwordCode = hashlib.sha1(password.encode())
+   passwordCode = hashlib.sha1(password.encode()) if app.config['USE_SHA1'] else hashlib.md5(password.encode())
    passwordCode = passwordCode.hexdigest()
    print(passwordCode)
    cursor.execute(f"""SELECT * FROM motovrn.mv2_users where username = \"{login}\" 
