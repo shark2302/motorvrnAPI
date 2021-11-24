@@ -1,3 +1,6 @@
+import datetime
+from time import timezone
+
 from flask import Flask, jsonify, request
 from flaskext.mysql import MySQL
 from config import Config
@@ -5,7 +8,7 @@ import json
 import hashlib
 import base64
 
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, get_jwt, set_access_cookies
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
@@ -31,13 +34,25 @@ mysql.init_app(app)
 conn = mysql.connect()
 cursor = conn.cursor()
 
+@app.after_request
+def refresh_expiring_jwts(response):
+    try:
+        exp_timestamp = get_jwt()["exp"]
+        now = datetime.now(timezone.utc)
+        target_timestamp = datetime.timestamp(now + datetime.timedelta(minutes=30))
+        if target_timestamp > exp_timestamp:
+            access_token = create_access_token(identity=get_jwt_identity())
+            set_access_cookies(response, access_token)
+        return response
+    except (RuntimeError, KeyError):
+        return response
+
 @app.route("/login", methods = ['POST'])
 def login() :
    login = request.args.get('login');
    password = request.args.get('password')
    passwordCode = hashlib.sha1(password.encode()) if app.config['USE_SHA1'] else hashlib.md5(password.encode())
    passwordCode = passwordCode.hexdigest()
-   print(passwordCode)
    cursor.execute(f"""SELECT * FROM motovrn.mv2_users where username = \"{login}\" 
         and password =\"{passwordCode}\";""")
    columnNames = [column[0] for column in cursor.description]
