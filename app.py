@@ -1,5 +1,6 @@
-import datetime
-from time import timezone
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 
 from flask import Flask, jsonify, request
 from flaskext.mysql import MySQL
@@ -30,6 +31,7 @@ app.config['MYSQL_DATABASE_DB'] = input()
 app.config['MYSQL_DATABASE_PASSWORD'] = input()
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 app.config['USE_SHA1'] = True
+app.config['TOKEN_EXPIRE'] = timedelta(days = 7)
 mysql.init_app(app)
 conn = mysql.connect()
 cursor = conn.cursor()
@@ -39,7 +41,7 @@ def refresh_expiring_jwts(response):
     try:
         exp_timestamp = get_jwt()["exp"]
         now = datetime.now(timezone.utc)
-        target_timestamp = datetime.timestamp(now + datetime.timedelta(minutes=30))
+        target_timestamp = datetime.timestamp(now + app.config['TOKEN_EXPIRE'])
         if target_timestamp > exp_timestamp:
             access_token = create_access_token(identity=get_jwt_identity())
             set_access_cookies(response, access_token)
