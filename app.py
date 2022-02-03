@@ -47,15 +47,19 @@ def refresh_expiring_jwts(response):
     except (RuntimeError, KeyError):
         return response
 
-@app.route("/login/", methods = ['POST'])
+@app.route("/login", methods = ['POST'])
 def login() :
    request_data = request.get_json()
+
    login = request_data['login']
    password = request_data['password']
+   if login == "" or password == "":
+       return "empty login and password", 401
    passwordCode = hashlib.sha1(password.encode()) if app.config['USE_SHA1'] else hashlib.md5(password.encode())
    passwordCode = passwordCode.hexdigest()
-   print(passwordCode)
    record = queryExecutor.loginQuery(login, passwordCode)
+   if record is None:
+       return "wrong data", 401
    access_token = create_access_token(identity={'login':login, 'password':password})
    result = LoginResultDTO(record['id'], record['username'], record['password'], access_token)
    return json.dumps(result, ensure_ascii=False, indent=4, cls=PostEncoder)

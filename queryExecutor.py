@@ -16,11 +16,12 @@ class QueryExecutor:
         self.cursor = self.conn.cursor()
 
     def loginQuery(self, login, password):
-
         self.cursor.execute(self.LOGIN_QUERY.format(login, password))
         columnNames = [column[0] for column in self.cursor.description]
-        print(columnNames)
-        return dict(zip(columnNames, self.cursor.fetchall()[0]))
+        result = self.cursor.fetchall()
+        if len(result) == 0:
+            return  None
+        return dict(zip(columnNames,result[0]))
 
     def allPostQuery(self):
         self.cursor.execute(self.ALL_POSTS_QUERY)
