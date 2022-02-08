@@ -74,11 +74,18 @@ def get_all_posts() :
     print(user)
     return serialize_posts(result)
 
+@app.route("/get_all_news/<int:fromIndex>" ,methods = ['GET'])
+@jwt_required()
+def get_all_news(fromIndex):
+    result = queryExecutor.allNewsQuery(fromIndex, 20)
+    print(result)
+    return serialize_posts(result)
+
 
 def serialize_posts(records):
     result = []
     for record in records:
-        result.append(PostDTO(record['id'], UserDTO(record['poster_id'], record['poster']), record['message']))
+        result.append(PostDTO(record['subject'], record['message'], UserDTO(record['poster_id'], record['poster']), record['posted']))
     return json.dumps(result, ensure_ascii=False, indent=4, cls=PostEncoder)
 
 def generate_token(login, password) :

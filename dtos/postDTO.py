@@ -2,10 +2,11 @@ from dtos import userDTO
 import json
 from json import JSONEncoder
 class PostDTO:
-    def __init__(self, id, user, message):
-        self.id = id
-        self.user = user
+    def __init__(self, title, message, user, date):
+        self.title = title
         self.message = message
+        self.user = user
+        self.data = date
 
 class PostEncoder(JSONEncoder):
     def default(self, o):
