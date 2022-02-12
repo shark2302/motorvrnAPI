@@ -66,19 +66,16 @@ def login() :
 
 
 
-@app.route("/get_all_posts/", methods =['GET'])
+@app.route("/get_all_dalnoboy/<int:fromIndex>", methods =['GET'])
 @jwt_required()
-def get_all_posts() :
-    result = queryExecutor.allPostQuery()
-    user=get_jwt_identity()
-    print(user)
+def get_all_posts(fromIndex) :
+    result = queryExecutor.allPostQuery(fromIndex, 20)
     return serialize_posts(result)
 
 @app.route("/get_all_news/<int:fromIndex>" ,methods = ['GET'])
 @jwt_required()
 def get_all_news(fromIndex):
     result = queryExecutor.allNewsQuery(fromIndex, 20)
-    print(result)
     return serialize_posts(result)
 
 
