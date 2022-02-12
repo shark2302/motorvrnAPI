@@ -19,27 +19,27 @@ from dtos.userDTO import UserDTO
 from dtos.loginResultDTO import LoginResultDTO
 from queryExecutor import QueryExecutor
 
-app = Flask(__name__)
+application = Flask(__name__)
 
-app.config.from_object(Config)
-app.config["JWT_SECRET_KEY"] = "super-secret"
-jwt = JWTManager(app)
+application.config.from_object(Config)
+application.config["JWT_SECRET_KEY"] = "super-secret"
+jwt = JWTManager(application)
 
-app.config['JSON_AS_ASCII'] = False
-app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_DB'] = input()
-app.config['MYSQL_DATABASE_PASSWORD'] = input()
-app.config['MYSQL_DATABASE_HOST'] = 'localhost'
-app.config['USE_SHA1'] = True
-app.config['TOKEN_EXPIRE'] = timedelta(days = 7)
-queryExecutor = QueryExecutor(app)
+application.config['JSON_AS_ASCII'] = False
+application.config['MYSQL_DATABASE_USER'] = 'root'
+application.config['MYSQL_DATABASE_DB'] = input()
+application.config['MYSQL_DATABASE_PASSWORD'] = input()
+application.config['MYSQL_DATABASE_HOST'] = 'localhost'
+application.config['USE_SHA1'] = True
+application.config['TOKEN_EXPIRE'] = timedelta(days = 7)
+queryExecutor = QueryExecutor(application, application.config['MYSQL_DATABASE_DB'])
 
-@app.after_request
+@application.after_request
 def refresh_expiring_jwts(response):
     try:
         exp_timestamp = get_jwt()["exp"]
         now = datetime.now(timezone.utc)
-        target_timestamp = datetime.timestamp(now + app.config['TOKEN_EXPIRE'])
+        target_timestamp = datetime.timestamp(now + application.config['TOKEN_EXPIRE'])
         if target_timestamp > exp_timestamp:
             access_token = create_access_token(identity=get_jwt_identity())
             set_access_cookies(response, access_token)
@@ -47,7 +47,7 @@ def refresh_expiring_jwts(response):
     except (RuntimeError, KeyError):
         return response
 
-@app.route("/login", methods = ['POST'])
+@application.route("/login", methods = ['POST'])
 def login() :
    request_data = request.get_json()
 
@@ -55,7 +55,7 @@ def login() :
    password = request_data['password']
    if login == "" or password == "":
        return "empty login and password", 401
-   passwordCode = hashlib.sha1(password.encode()) if app.config['USE_SHA1'] else hashlib.md5(password.encode())
+   passwordCode = hashlib.sha1(password.encode()) if application.config['USE_SHA1'] else hashlib.md5(password.encode())
    passwordCode = passwordCode.hexdigest()
    record = queryExecutor.loginQuery(login, passwordCode)
    if record is None:
@@ -66,13 +66,13 @@ def login() :
 
 
 
-@app.route("/get_all_dalnoboy/<int:fromIndex>", methods =['GET'])
+@application.route("/get_all_dalnoboy/<int:fromIndex>", methods =['GET'])
 @jwt_required()
 def get_all_posts(fromIndex) :
     result = queryExecutor.allPostQuery(fromIndex, 20)
     return serialize_posts(result)
 
-@app.route("/get_all_news/<int:fromIndex>" ,methods = ['GET'])
+@application.route("/get_all_news/<int:fromIndex>" , methods = ['GET'])
 @jwt_required()
 def get_all_news(fromIndex):
     result = queryExecutor.allNewsQuery(fromIndex, 20)
