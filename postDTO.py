@@ -1,5 +1,3 @@
-from dtos import userDTO
-import json
 from json import JSONEncoder
 class PostDTO:
     def __init__(self, title, message, user, date):
