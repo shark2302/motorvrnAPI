@@ -6,15 +6,17 @@ class QueryExecutor:
     LOGIN_QUERY ="""SELECT * FROM {dbName}.mv2_users where username = \"{}\" 
                and password =\"{}\";"""
 
-    POSTS_QUERY = """SELECT  mv2_topics.subject, mv2_posts.message, {dbName}.mv2_posts.poster, {dbName}.mv2_posts.poster_id, {dbName}.mv2_posts.posted  FROM {dbName}.mv2_posts, {dbName}.mv2_topics
+    POSTS_QUERY = """SELECT mv2_topics.subject, mv2_posts.message, {dbName}.mv2_posts.poster, {dbName}.mv2_posts.poster_id, {dbName}.mv2_posts.posted  FROM {dbName}.mv2_posts, {dbName}.mv2_topics
 where {dbName}.mv2_posts.topic_id = mv2_topics.id and mv2_topics.forum_id = {}
 and {dbName}.mv2_posts.id = mv2_topics.first_post_id
 order by {dbName}.mv2_posts.posted desc limit {}, {}"""
 
-    SHORT_POST_INFO_QUERY = """SELECT  mv2_topics.subject, {dbName}.mv2_posts.poster, {dbName}.mv2_posts.poster_id, {dbName}.mv2_posts.posted  FROM {dbName}.mv2_posts, {dbName}.mv2_topics
+    SHORT_POST_INFO_QUERY = """SELECT mv2_posts.id, mv2_topics.subject, {dbName}.mv2_posts.poster, {dbName}.mv2_posts.poster_id, {dbName}.mv2_posts.posted  FROM {dbName}.mv2_posts, {dbName}.mv2_topics
         where {dbName}.mv2_posts.topic_id = mv2_topics.id and mv2_topics.forum_id = {}
             and {dbName}.mv2_posts.id = mv2_topics.first_post_id
                 order by {dbName}.mv2_posts.posted desc limit {}, {} """
+
+    MESSAGE_FROM_POST_QUERY = """SELECT message FROM {dbName}.mv2_posts where id = {};"""
 
     def __init__(self, app, dbName):
         mysql = MySQL()
@@ -54,6 +56,12 @@ order by {dbName}.mv2_posts.posted desc limit {}, {}"""
         for record in self.cursor.fetchall():
             result.append(dict(zip(columnNames, record)))
         return result
+
+    def messageFromPostQuery(self, postId):
+        self.cursor.execute(self.MESSAGE_FROM_POST_QUERY.format(postId, dbName=self.dbName))
+        result = self.cursor.fetchall()
+        return {'message' : result[0][0]} if len(result) > 0 else {'message' : ''}
+
 
     def __del__(self):
         self.conn.close()

@@ -73,6 +73,14 @@ def get_all_short_posts_dalnoboy(fromIndex):
     result = queryExecutor.shortPostInfoQuery(fromIndex, 20)
     return serialize_short_posts(result)
 
+@application.route("/get_message_from_post/<int:postId>", methods =['GET'], endpoint = "get_message_from_post")
+@jwt_required
+def get_message_from_post(postId):
+    get_jwt_identity()
+    result = queryExecutor.messageFromPostQuery(postId)
+    print(result)
+    return result
+
 def serialize_posts(records):
     result = []
     for record in records:
@@ -83,7 +91,7 @@ def serialize_posts(records):
 def serialize_short_posts(records):
     result = []
     for record in records:
-        result.append(ShortPostDTO(record['subject'], UserDTO(record['poster_id'], record['poster']), record['posted']))
+        result.append(ShortPostDTO(record['id'], record['subject'], UserDTO(record['poster_id'], record['poster']), record['posted']))
     return json.dumps(result, ensure_ascii=False, indent=4, cls=PostEncoder)
 
 def generate_token(login, password) :

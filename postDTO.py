@@ -7,7 +7,8 @@ class PostDTO:
         self.data = date
 
 class ShortPostDTO:
-    def __init__(self, title, user, date):
+    def __init__(self, postId, title, user, date):
+        self.postId = postId
         self.title = title
         self.user = user
         self.data = date
