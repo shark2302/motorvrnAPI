@@ -11,7 +11,7 @@ from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
 
-from postDTO import PostDTO, PostEncoder
+from postDTO import PostDTO, PostEncoder, ShortPostDTO
 from userDTO import UserDTO
 from loginResultDTO import LoginResultDTO
 from queryExecutor import QueryExecutor
@@ -25,26 +25,13 @@ jwt = JWTManager(application)
 application.config['JSON_AS_ASCII'] = False
 application.config['JWT_TOKEN_LOCATION'] = ['headers', 'query_string']
 application.config['MYSQL_DATABASE_USER'] = 'root'
-application.config['MYSQL_DATABASE_DB'] = 'motovrn'
+application.config['MYSQL_DATABASE_DB'] = 'sys'
 application.config['MYSQL_DATABASE_PASSWORD'] = 'Sa230200'
 application.config['MYSQL_DATABASE_HOST'] = 'localhost'
 application.config['USE_SHA1'] = True
 application.config['TOKEN_EXPIRE'] = timedelta(days = 7)
 queryExecutor = QueryExecutor(application, application.config['MYSQL_DATABASE_DB'])
 
-"""@application.after_request
-def refresh_expiring_jwts(response):
-    try:
-        exp_timestamp = get_jwt()["exp"]
-        now = datetime.now(pytz.utc)
-        target_timestamp = datetime.timestamp(now + application.config['TOKEN_EXPIRE'])
-        if target_timestamp > exp_timestamp:
-            access_token = create_access_token(identity=get_jwt_identity())
-            set_access_cookies(response, access_token)
-        return response
-    except (RuntimeError, KeyError):
-        return response
-"""
 @application.route("/login", methods = ['POST'])
 def login() :
    request_data = request.get_json()
@@ -65,25 +52,38 @@ def login() :
 
 
 
-@application.route("/get_all_dalnoboy/<int:fromIndex>", methods =['GET'])
+@application.route("/get_all_dalnoboy/<int:fromIndex>", methods =['GET'], endpoint = "get_all_posts")
 @jwt_required
 def get_all_posts(fromIndex) :
     get_jwt_identity()
     result = queryExecutor.allPostQuery(fromIndex, 20)
     return serialize_posts(result)
 
-@application.route("/get_all_news/<int:fromIndex>" , methods = ['GET'])
+@application.route("/get_all_news/<int:fromIndex>" , methods = ['GET'], endpoint = "get_all_news")
 @jwt_required
 def get_all_news(fromIndex):
     get_jwt_identity()
     result = queryExecutor.allNewsQuery(fromIndex, 20)
     return serialize_posts(result)
 
+@application.route("/get_all_short_posts_dalnoboy/<int:fromIndex>", methods =['GET'], endpoint = "get_all_short_posts_dalnoboy")
+@jwt_required
+def get_all_short_posts_dalnoboy(fromIndex):
+    get_jwt_identity()
+    result = queryExecutor.shortPostInfoQuery(fromIndex, 20)
+    return serialize_short_posts(result)
 
 def serialize_posts(records):
     result = []
     for record in records:
         result.append(PostDTO(record['subject'], record['message'], UserDTO(record['poster_id'], record['poster']), record['posted']))
+    return json.dumps(result, ensure_ascii=False, indent=4, cls=PostEncoder)
+
+
+def serialize_short_posts(records):
+    result = []
+    for record in records:
+        result.append(ShortPostDTO(record['subject'], UserDTO(record['poster_id'], record['poster']), record['posted']))
     return json.dumps(result, ensure_ascii=False, indent=4, cls=PostEncoder)
 
 def generate_token(login, password) :
@@ -94,4 +94,3 @@ def generate_token(login, password) :
     return base64_message
 
 #CGIHandler().run(application)
-
