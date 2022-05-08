@@ -18,6 +18,8 @@ order by {dbName}.mv2_posts.posted desc limit {}, {}"""
 
     MESSAGE_FROM_POST_QUERY = """SELECT message FROM {dbName}.mv2_posts where id = {};"""
 
+    ALL_EVENTS_QUERY = """SELECT mv2_topics.subject, mv2_posts.id FROM {dbName}.mv2_topics, {dbName}.mv2_posts where mv2_posts.topic_id = mv2_topics.id and mv2_topics.forum_id = 7 and mv2_posts.id = mv2_topics.first_post_id and mv2_topics.sticky = 1;"""
+
     def __init__(self, app, dbName):
         mysql = MySQL()
         mysql.init_app(app)
@@ -61,6 +63,14 @@ order by {dbName}.mv2_posts.posted desc limit {}, {}"""
         self.cursor.execute(self.MESSAGE_FROM_POST_QUERY.format(postId, dbName=self.dbName))
         result = self.cursor.fetchall()
         return {'message' : result[0][0]} if len(result) > 0 else {'message' : ''}
+
+    def allEvents(self):
+        self.cursor.execute(self.ALL_EVENTS_QUERY.format(dbName=self.dbName))
+        columnNames = [column[0] for column in self.cursor.description]
+        result = []
+        for record in self.cursor.fetchall():
+            result.append(dict(zip(columnNames, record)))
+        return result
 
 
     def __del__(self):

@@ -13,6 +13,7 @@ from flask_jwt_extended import JWTManager
 
 from postDTO import PostDTO, PostEncoder, ShortPostDTO
 from userDTO import UserDTO
+from eventDTO import EventDTO
 from loginResultDTO import LoginResultDTO
 from queryExecutor import QueryExecutor
 
@@ -25,7 +26,7 @@ jwt = JWTManager(application)
 application.config['JSON_AS_ASCII'] = False
 application.config['JWT_TOKEN_LOCATION'] = ['headers', 'query_string']
 application.config['MYSQL_DATABASE_USER'] = 'root'
-application.config['MYSQL_DATABASE_DB'] = 'sys'
+application.config['MYSQL_DATABASE_DB'] = 'motovrn'
 application.config['MYSQL_DATABASE_PASSWORD'] = 'Sa230200'
 application.config['MYSQL_DATABASE_HOST'] = 'localhost'
 application.config['USE_SHA1'] = True
@@ -81,6 +82,13 @@ def get_message_from_post(postId):
     print(result)
     return result
 
+@application.route("/get_all_events/", methods =['GET'], endpoint = "get_all_events")
+@jwt_required
+def get_all_events():
+    get_jwt_identity()
+    result = queryExecutor.allEvents()
+    return serialize_events(result)
+
 def serialize_posts(records):
     result = []
     for record in records:
@@ -94,11 +102,18 @@ def serialize_short_posts(records):
         result.append(ShortPostDTO(record['id'], record['subject'], UserDTO(record['poster_id'], record['poster']), record['posted']))
     return json.dumps(result, ensure_ascii=False, indent=4, cls=PostEncoder)
 
+def serialize_events(records):
+    result = []
+    for record in records:
+        result.append(EventDTO(record['id'], record['subject']))
+    return json.dumps(result, ensure_ascii=False, indent=4, cls=PostEncoder)
+
 def generate_token(login, password) :
     tokenString = login + password
     message_bytes = tokenString.encode('ascii')
     base64_bytes = base64.b64encode(message_bytes)
     base64_message = base64_bytes.decode('ascii')
     return base64_message
+
 
 #CGIHandler().run(application)
