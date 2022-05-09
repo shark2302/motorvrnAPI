@@ -26,7 +26,7 @@ jwt = JWTManager(application)
 application.config['JSON_AS_ASCII'] = False
 application.config['JWT_TOKEN_LOCATION'] = ['headers', 'query_string']
 application.config['MYSQL_DATABASE_USER'] = 'root'
-application.config['MYSQL_DATABASE_DB'] = 'motovrn'
+application.config['MYSQL_DATABASE_DB'] = 'sys'
 application.config['MYSQL_DATABASE_PASSWORD'] = 'Sa230200'
 application.config['MYSQL_DATABASE_HOST'] = 'localhost'
 application.config['USE_SHA1'] = True
@@ -105,7 +105,7 @@ def serialize_short_posts(records):
 def serialize_events(records):
     result = []
     for record in records:
-        result.append(EventDTO(record['id'], record['subject']))
+        result.append(EventDTO(record['id'], record['subject'], record['message'], record['poster'], record['posted']))
     return json.dumps(result, ensure_ascii=False, indent=4, cls=PostEncoder)
 
 def generate_token(login, password) :

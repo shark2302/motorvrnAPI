@@ -18,7 +18,7 @@ order by {dbName}.mv2_posts.posted desc limit {}, {}"""
 
     MESSAGE_FROM_POST_QUERY = """SELECT message FROM {dbName}.mv2_posts where id = {};"""
 
-    ALL_EVENTS_QUERY = """SELECT mv2_topics.subject, mv2_posts.id FROM {dbName}.mv2_topics, {dbName}.mv2_posts where mv2_posts.topic_id = mv2_topics.id and mv2_topics.forum_id = 7 and mv2_posts.id = mv2_topics.first_post_id and mv2_topics.sticky = 1;"""
+    ALL_EVENTS_QUERY = """SELECT mv2_topics.subject, mv2_posts.id, mv2_posts.message, {dbName}.mv2_posts.poster,{dbName}.mv2_posts.posted  FROM {dbName}.mv2_topics, {dbName}.mv2_posts where mv2_posts.topic_id = mv2_topics.id and mv2_topics.forum_id = 7 and mv2_posts.id = mv2_topics.first_post_id and mv2_topics.sticky = 1;"""
 
     def __init__(self, app, dbName):
         mysql = MySQL()
